@@ -31,6 +31,8 @@ async function run() {
 
     const coffeeDatabase = client.db('coffeeDB');
     const coffeeCollection = coffeeDatabase.collection('coffee');
+
+    const usersCollection = client.db('coffeeDB').collection('users');
     
     app.get('/coffee', async(req, res) => { 
       const cursor = coffeeCollection.find();
@@ -85,10 +87,49 @@ async function run() {
     })
 
 
+    // for users
+
+    app.get('/users', async(req, res) => {
+       const allUsers = usersCollection.find();
+       const result = await allUsers.toArray();
+       res.send(result);
+    })
+
+    app.post('/users', async(req, res) => {
+      const userBody = req.body;
+      const result = await usersCollection.insertOne(userBody);
+      res.send(result);
+    })
+
+    app.patch('/users', async(req, res) => {
+      // const email = req.body.email;
+      // const query = { email};
+      const usersEmail = req.body.email;
+      const query = {email : usersEmail}
+      
+      const updateUser = {
+        $set: {
+          lastSignInTime : req.body?.lastSignInTime
+        }
+      }
+
+      const result = await usersCollection.updateOne(query, updateUser);
+      res.send(result);
+    })
+
+
+    app.delete('/users/:id', async(req, res) => {
+      const userId = req.params.id;
+      const query = {_id: ObjectId(userId)};
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
